@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veille Prix Parfums</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#F7F4EF;--ink:#1A1712;--gold:#B8955A;--gold-light:#E8D5B0;--gold-pale:#F5EDD9;--muted:#7A7368;--border:rgba(26,23,18,0.1);--border-strong:rgba(26,23,18,0.22);--success:#2D6A4F;--success-bg:#D8F3DC;--danger:#7B1D1D;--danger-bg:#FDECEA;--warning:#8A4500;--warning-bg:#FFF3E0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+header{background:var(--ink);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:100}
+.logo{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;color:var(--gold-light);letter-spacing:2.5px;text-transform:uppercase}
+.logo em{color:var(--gold);font-style:italic}
+.hright{display:flex;align-items:center;gap:14px}
+.dot{width:7px;height:7px;border-radius:50%;background:#5BE584;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hlabel{font-size:10px;color:rgba(247,244,239,.45);letter-spacing:1.5px;text-transform:uppercase}
+main{max-width:1200px;margin:0 auto;padding:2rem 2rem 5rem}
+
+/* PANEL */
+.panel{background:var(--ink);border-radius:14px;padding:2rem;margin-bottom:2rem;position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(184,149,90,.15)}
+.panel-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--gold-light);margin-bottom:4px}
+.panel-sub{font-size:13px;color:rgba(247,244,239,.4);margin-bottom:1.5rem}
+
+/* EAN INPUT */
+.ean-row{display:flex;gap:12px;margin-bottom:1.5rem;flex-wrap:wrap}
+.ean-box{flex:1;min-width:260px}
+.ean-box label{font-size:10px;color:rgba(247,244,239,.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px}
+.ean-box textarea{width:100%;background:rgba(247,244,239,.06);border:1px solid rgba(184,149,90,.25);border-radius:8px;padding:12px 14px;color:var(--cream);font-family:'DM Mono',monospace;font-size:13px;outline:none;resize:vertical;min-height:120px;line-height:1.7}
+.ean-box textarea::placeholder{color:rgba(247,244,239,.18)}
+.ean-box textarea:focus{border-color:var(--gold)}
+
+/* SITES */
+.sites-box{flex:1;min-width:260px}
+.sites-box label{font-size:10px;color:rgba(247,244,239,.4);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px}
+.sites-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.site-chk{display:flex;align-items:center;gap:7px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid rgba(184,149,90,.15);background:rgba(247,244,239,.04);transition:all .15s}
+.site-chk:hover{border-color:rgba(184,149,90,.4);background:rgba(247,244,239,.08)}
+.site-chk input{accent-color:var(--gold);width:13px;height:13px;cursor:pointer}
+.site-chk span{font-size:12px;color:rgba(247,244,239,.7)}
+.site-chk.checked{border-color:rgba(184,149,90,.5);background:rgba(184,149,90,.1)}
+
+/* BOTTOM ROW */
+.bottom-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn-go{background:var(--gold);border:none;border-radius:8px;padding:0 28px;height:44px;color:var(--ink);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .1s}
+.btn-go:hover{opacity:.85}
+.btn-go:active{transform:scale(.98)}
+.btn-go:disabled{opacity:.35;cursor:not-allowed}
+.btn-clear{background:transparent;border:1px solid rgba(247,244,239,.15);border-radius:8px;padding:0 18px;height:44px;color:rgba(247,244,239,.5);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s}
+.btn-clear:hover{border-color:rgba(247,244,239,.35);color:rgba(247,244,239,.8)}
+.hint{font-size:11px;color:rgba(247,244,239,.28);margin-left:auto}
+
+/* PROGRESS */
+.progress-bar{background:rgba(247,244,239,.08);border-radius:20px;height:6px;margin-bottom:1rem;overflow:hidden;display:none}
+.progress-fill{height:100%;background:var(--gold);border-radius:20px;transition:width .4s ease;width:0%}
+.progress-label{font-size:12px;color:rgba(247,244,239,.5);margin-bottom:8px;display:none}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.5rem}
+.sc{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.sc-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.sc-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;line-height:1;color:var(--ink)}
+.sc-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* TABLE HEADER */
+.table-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px}
+.table-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.8px}
+.table-actions{display:flex;gap:8px}
+.btn-sm{background:transparent;border:1px solid var(--border-strong);border-radius:6px;padding:6px 14px;font-size:12px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-sm:hover{background:#fff;color:var(--ink)}
+
+/* COMPARISON TABLE */
+.table-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem}
+.ctable{width:100%;border-collapse:collapse;font-size:13px;table-layout:auto}
+.ctable th{background:var(--ink);color:var(--gold-light);padding:10px 14px;text-align:left;font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap}
+.ctable th.site-col{text-align:center;min-width:90px}
+.ctable td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ctable tr:last-child td{border-bottom:none}
+.ctable tr:hover td{background:rgba(247,244,239,.5)}
+.prod-name{font-weight:500;font-size:13px;max-width:180px}
+.prod-brand{font-size:11px;color:var(--muted)}
+.prod-ean{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+.prod-vol{font-size:11px;color:var(--muted);white-space:nowrap}
+.price-cell{text-align:center;white-space:nowrap}
+.price-val{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:400;display:block}
+.price-cur{font-size:9px;color:var(--muted)}
+.price-best{color:var(--success);font-weight:500}
+.price-high{color:var(--danger)}
+.price-na{color:var(--border-strong);font-size:18px}
+.price-link{font-size:9px;color:#1A5CA8;text-decoration:none;display:block;margin-top:2px}
+.price-link:hover{text-decoration:underline}
+.loading-cell{text-align:center;padding:8px}
+.spinner-sm{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .75s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-badge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:20px;font-weight:500}
+.sb-ok{background:var(--success-bg);color:var(--success)}
+.sb-err{background:var(--danger-bg);color:var(--danger)}
+.sb-loading{background:var(--warning-bg);color:var(--warning)}
+
+/* EMPTY */
+.empty{text-align:center;padding:3rem 2rem;color:var(--muted)}
+.empty-glyph{font-family:'Cormorant Garamond',serif;font-size:48px;color:var(--gold-light);margin-bottom:1rem}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:var(--cream);padding:11px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+.toast.on{opacity:1;transform:translateY(0)}
+
+footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:1rem}
+@media(max-width:700px){main{padding:1.5rem 1rem 4rem}.ctable{font-size:11px}.ctable td,.ctable th{padding:8px 8px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Parfum <em>Veille</em> Prix</div>
+  <div class="hright">
+    <div class="dot"></div>
+    <span class="hlabel">Mondial</span>
+  </div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="panel-title">Veille prix mondiale par codes EAN</div>
+    <div class="panel-sub">Entrez jusqu'à 20 codes EAN et sélectionnez les sites à interroger</div>
+
+    <div class="ean-row">
+      <div class="ean-box">
+        <label>Codes EAN (un par ligne, 20 max)</label>
+        <textarea id="ean-input" placeholder="3305400183146&#10;3348901419093&#10;3145891253400&#10;..."></textarea>
+      </div>
+      <div class="sites-box">
+        <label>Sites à interroger</label>
+        <div class="sites-grid" id="sites-grid"></div>
+      </div>
+    </div>
+
+    <div class="progress-label" id="prog-label">Recherche en cours…</div>
+    <div class="progress-bar" id="prog-bar"><div class="progress-fill" id="prog-fill"></div></div>
+
+    <div class="bottom-row">
+      <button class="btn-go" id="btn-go" onclick="startSearch()">Lancer la recherche</button>
+      <button class="btn-clear" onclick="clearAll()">Effacer tout</button>
+      <span class="hint" id="ean-count"></span>
+    </div>
+  </div>
+
+  <div class="stats" id="stats" style="display:none">
+    <div class="sc"><div class="sc-lbl">Produits</div><div class="sc-val" id="s1">0</div><div class="sc-sub">codes EAN</div></div>
+    <div class="sc"><div class="sc-lbl">Prix collectés</div><div class="sc-val" id="s2">0</div><div class="sc-sub">entrées</div></div>
+    <div class="sc"><div class="sc-lbl">Meilleur prix</div><div class="sc-val" id="s3">—</div><div class="sc-sub">toutes plateformes</div></div>
+    <div class="sc"><div class="sc-lbl">Écart max</div><div class="sc-val" id="s4">—</div><div class="sc-sub">min vs max</div></div>
+  </div>
+
+  <div class="table-hd" id="table-hd" style="display:none">
+    <div class="table-title">Tableau comparatif</div>
+    <div class="table-actions">
+      <button class="btn-sm" onclick="exportCSV()">Exporter CSV</button>
+      <button class="btn-sm" onclick="clearResults()">Effacer résultats</button>
+    </div>
+  </div>
+
+  <div class="table-wrap" id="table-wrap" style="display:none">
+    <table class="ctable" id="ctable">
+      <thead id="cthead"></thead>
+      <tbody id="ctbody"></tbody>
+    </table>
+  </div>
+
+  <div class="empty" id="empty">
+    <div class="empty-glyph">◌</div>
+    <div>Entrez des codes EAN et lancez la recherche</div>
+  </div>
+</main>
+
+<footer>Parfum Veille Prix — Veille e-commerce mondiale · Données issues de recherches web publiques</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const SITES = [
+  {id:'sephora_fr', label:'Sephora FR', country:'FR'},
+  {id:'notino', label:'Notino', country:'EU'},
+  {id:'marionnaud', label:'Marionnaud', country:'FR'},
+  {id:'nocibe', label:'Nocibé', country:'FR'},
+  {id:'douglas', label:'Douglas', country:'DE'},
+  {id:'flaconi', label:'Flaconi', country:'DE'},
+  {id:'parfumdreams', label:'parfumdreams', country:'EU'},
+  {id:'feelunique', label:'Feelunique', country:'UK'},
+  {id:'fragrance_com', label:'Fragrance.com', country:'US'},
+  {id:'amazon_fr', label:'Amazon FR', country:'FR'},
+  {id:'amazon_de', label:'Amazon DE', country:'DE'},
+  {id:'amazon_uk', label:'Amazon UK', country:'UK'},
+  {id:'amazon_us', label:'Amazon US', country:'US'},
+  {id:'official', label:'Site officiel', country:'—'},
+];
+
+let selectedSites = SITES.map(s=>s.label);
+let results = [];
+let allSitesFound = new Set();
+
+// Build site checkboxes
+const grid = document.getElementById('sites-grid');
+SITES.forEach(s => {
+  const lbl = document.createElement('label');
+  lbl.className = 'site-chk checked';
+  lbl.innerHTML = `<input type="checkbox" checked value="${s.label}"><span>${s.label}</span>`;
+  lbl.querySelector('input').addEventListener('change', e => {
+    if(e.target.checked){ selectedSites.push(s.label); lbl.classList.add('checked'); }
+    else { selectedSites = selectedSites.filter(x=>x!==s.label); lbl.classList.remove('checked'); }
+  });
+  grid.appendChild(lbl);
+});
+
+document.getElementById('ean-input').addEventListener('input', updateCount);
+
+function updateCount(){
+  const eans = getEANs();
+  document.getElementById('ean-count').textContent = eans.length > 0 ? eans.length + ' EAN' + (eans.length>1?'s':'') + ' détecté' + (eans.length>1?'s':'') : '';
+}
+
+function getEANs(){
+  return document.getElementById('ean-input').value.split('\n').map(s=>s.trim().replace(/\D/g,'')).filter(s=>s.length>=8).slice(0,20);
+}
+
+function toast(msg, dur=2800){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),dur);
+}
+
+function sym(cur){ return cur==='GBP'?'£':cur==='USD'?'$':'€'; }
+
+function buildTableHeader(){
+  const sites = Array.from(allSitesFound).sort();
+  document.getElementById('cthead').innerHTML = `<tr>
+    <th>Produit</th>
+    <th>EAN</th>
+    <th>Volume</th>
+    <th>Statut</th>
+    ${sites.map(s=>`<th class="site-col">${s}</th>`).join('')}
+    <th class="site-col">Min €</th>
+    <th class="site-col">Max €</th>
+  </tr>`;
+}
+
+function buildTableBody(){
+  const sites = Array.from(allSitesFound).sort();
+  const tbody = document.getElementById('ctbody');
+  tbody.innerHTML = '';
+
+  results.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + r.ean;
+
+    if(r.loading){
+      tr.innerHTML = `<td colspan="${4+sites.length+2}" style="padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px">
+          <div class="spinner-sm"></div> Recherche en cours pour ${r.ean}…
+        </div></td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+
+    if(r.error){
+      tr.innerHTML = `<td colspan="${4+sites.length+2}" style="padding:10px 14px;background:var(--danger-bg);color:var(--danger);font-size:12px">
+        Erreur pour ${r.ean} : ${r.error}</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+
+    const priceMap = {};
+    (r.prices||[]).forEach(p=>{ priceMap[p.site] = p; });
+
+    const eurPrices = (r.prices||[]).map(p=>p.priceEur).filter(Boolean);
+    const minEur = eurPrices.length ? Math.min(...eurPrices) : null;
+    const maxEur = eurPrices.length ? Math.max(...eurPrices) : null;
+
+    const statusBadge = r.found
+      ? `<span class="status-badge sb-ok">Trouvé</span>`
+      : `<span class="status-badge sb-err">Non trouvé</span>`;
+
+    const priceCells = sites.map(site => {
+      const p = priceMap[site];
+      if(!p) return `<td class="price-cell"><span class="price-na">—</span></td>`;
+      const isMin = p.priceEur && Math.abs(p.priceEur - minEur) < 0.01;
+      const isMax = p.priceEur && Math.abs(p.priceEur - maxEur) < 0.01 && minEur !== maxEur;
+      const cls = isMin ? 'price-best' : isMax ? 'price-high' : '';
+      const link = p.url ? `<a class="price-link" href="${p.url}" target="_blank">voir →</a>` : '';
+      return `<td class="price-cell">
+        <span class="price-val ${cls}">${sym(p.currency)}${p.price?.toFixed(2)}</span>
+        <span class="price-cur">${p.currency}</span>
+        ${link}
+      </td>`;
+    }).join('');
+
+    tr.innerHTML = `
+      <td>
+        <div class="prod-name">${r.name||'—'}</div>
+        <div class="prod-brand">${r.brand||''}</div>
+      </td>
+      <td><span class="prod-ean">${r.ean}</span></td>
+      <td><span class="prod-vol">${r.volume?r.volume+'ml':''} ${r.type||''}</span></td>
+      <td>${statusBadge}</td>
+      ${priceCells}
+      <td class="price-cell"><span class="price-val price-best">${minEur?'€'+minEur.toFixed(2):'—'}</span></td>
+      <td class="price-cell"><span class="price-val price-high">${maxEur?'€'+maxEur.toFixed(2):'—'}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateStats(){
+  const found = results.filter(r=>r.found && !r.loading && !r.error);
+  const allPrices = found.flatMap(r=>(r.prices||[]).map(p=>p.priceEur)).filter(Boolean);
+  const minP = allPrices.length ? Math.min(...allPrices) : null;
+  const maxP = allPrices.length ? Math.max(...allPrices) : null;
+  document.getElementById('s1').textContent = results.length;
+  document.getElementById('s2').textContent = allPrices.length;
+  document.getElementById('s3').textContent = minP ? '€'+minP.toFixed(2) : '—';
+  document.getElementById('s4').textContent = (minP&&maxP&&minP!==maxP) ? '+'+((maxP-minP)/minP*100).toFixed(0)+'%' : '—';
+  document.getElementById('stats').style.display = results.length ? 'grid' : 'none';
+  document.getElementById('table-hd').style.display = results.length ? 'flex' : 'none';
+  document.getElementById('table-wrap').style.display = results.length ? 'block' : 'none';
+  document.getElementById('empty').style.display = results.length ? 'none' : 'block';
+}
+
+async function fetchOne(ean, name){
+  const r = await fetch('/api/search', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ean, name, sites: selectedSites})
+  });
+  const data = await r.json();
+  if(!r.ok) throw new Error(data.error||'Erreur serveur');
+  return data;
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function startSearch(){
+  const eans = getEANs();
+  if(!eans.length){ toast('Entrez au moins un code EAN'); return; }
+  if(!selectedSites.length){ toast('Sélectionnez au moins un site'); return; }
+
+  const btn = document.getElementById('btn-go');
+  btn.disabled = true; btn.textContent = 'Recherche…';
+
+  results = eans.map(ean=>({ean, loading:true}));
+  allSitesFound = new Set();
+
+  document.getElementById('prog-bar').style.display = 'block';
+  document.getElementById('prog-label').style.display = 'block';
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('table-hd').style.display = 'flex';
+  document.getElementById('table-wrap').style.display = 'block';
+  document.getElementById('stats').style.display = 'grid';
+  buildTableHeader();
+  buildTableBody();
+  updateStats();
+
+  for(let i=0; i<eans.length; i++){
+    const ean = eans[i];
+    const pct = Math.round((i/eans.length)*100);
+    document.getElementById('prog-fill').style.width = pct+'%';
+    document.getElementById('prog-label').textContent = `Recherche ${i+1}/${eans.length} — EAN ${ean}…`;
+
+    try{
+      const res = await fetchOne(ean, null);
+      const idx = results.findIndex(r=>r.ean===ean);
+      results[idx] = {
+        ean, loading:false, found:res.found,
+        name:res.product_name, brand:res.brand,
+        volume:res.volume_ml, type:res.type,
+        prices:res.prices||[], notes:res.notes
+      };
+      (res.prices||[]).forEach(p=>allSitesFound.add(p.site));
+    } catch(err){
+      const idx = results.findIndex(r=>r.ean===ean);
+      results[idx] = {ean, loading:false, error:err.message, found:false, prices:[]};
+    }
+
+    buildTableHeader();
+    buildTableBody();
+    updateStats();
+
+    if(i < eans.length-1) await sleep(35000);
+  }
+
+  document.getElementById('prog-fill').style.width = '100%';
+  document.getElementById('prog-label').textContent = 'Recherche terminée !';
+  setTimeout(()=>{
+    document.getElementById('prog-bar').style.display='none';
+    document.getElementById('prog-label').style.display='none';
+  }, 2000);
+
+  btn.disabled=false; btn.textContent='Lancer la recherche';
+  toast('Recherche terminée — '+results.filter(r=>r.found).length+' produit(s) trouvé(s)');
+}
+
+function clearAll(){
+  document.getElementById('ean-input').value='';
+  updateCount();
+}
+
+function clearResults(){
+  results=[]; allSitesFound=new Set();
+  buildTableHeader(); buildTableBody(); updateStats();
+}
+
+function exportCSV(){
+  const sites = Array.from(allSitesFound).sort();
+  const header = ['EAN','Produit','Marque','Volume','Type',...sites,'Min EUR','Max EUR'];
+  const rows = results.filter(r=>!r.loading&&!r.error).map(r=>{
+    const priceMap={};
+    (r.prices||[]).forEach(p=>{priceMap[p.site]=p;});
+    const eurPrices=(r.prices||[]).map(p=>p.priceEur).filter(Boolean);
+    const minE=eurPrices.length?Math.min(...eurPrices):'';
+    const maxE=eurPrices.length?Math.max(...eurPrices):'';
+    return [r.ean,r.name||'',r.brand||'',r.volume||'',r.type||'',
+      ...sites.map(s=>priceMap[s]?priceMap[s].price:''),
+      minE?minE.toFixed(2):'', maxE?maxE.toFixed(2):''];
+  });
+  const csv=[[...header],...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='veille-prix-parfums-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+</script>
+</body>
+</html>

@@ -12,11 +12,13 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Clé API non configurée' });
 
-  const siteList = sites && sites.length ? sites.join(', ') : 'Sephora FR, Notino, Marionnaud, Nocibé, Douglas, Flaconi, Fragrance.com, Amazon FR, Amazon DE, Amazon UK, Amazon US, parfumdreams, Feelunique, site officiel marque';
+  const siteList = sites && sites.length
+    ? sites.join(', ')
+    : 'Sephora, Notino, Marionnaud, Nocibé, Douglas, Flaconi, Fragrance.com, Amazon FR, Amazon DE, Amazon UK, Amazon US, site officiel';
 
-  const prompt = `Parfum EAN "${ean}"${name ? ` (${name})` : ''}. Cherche prix sur: ${siteList}. JSON uniquement sans markdown:
+  const prompt = `Recherche le prix du parfum EAN "${ean}"${name ? ` (${name})` : ''} sur ces sites: ${siteList}. Donne les vrais prix actuels trouvés sur internet. JSON uniquement sans markdown:
 {"product_name":"nom complet","brand":"marque","volume_ml":75,"type":"Eau de Parfum","found":true,"prices":[{"site":"Sephora","country":"FR","currency":"EUR","price":69.90,"isOfficial":false,"url":"https://...","in_stock":true}],"notes":""}
-Si inconnu: found:false, prices:[].`;
+Si introuvable: found:false, prices:[].`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -27,9 +29,9 @@ Si inconnu: found:false, prices:[].`;
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 800,
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 8 }],
         messages: [{ role: 'user', content: prompt }]
       })
     });

@@ -12,41 +12,17 @@ module.exports = async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Clé API non configurée' });
 
-  const prompt = `Tu es un expert en veille prix parfums. 
+  const prompt = `Recherche le parfum EAN "${ean}"${name ? ` ou "${name}"` : ''} sur internet. Trouve son nom, sa marque, et ses prix sur un maximum de sites e-commerce dans le monde.
 
-Etape 1 : Recherche sur internet le parfum avec l'EAN "${ean}"${name ? ` ou le nom "${name}"` : ''}. Trouve d'abord son nom exact et sa marque.
+Réponds UNIQUEMENT avec ce JSON minifié sur UNE SEULE LIGNE, sans retour à la ligne, sans markdown :
+{"product_name":"nom","brand":"marque","volume_ml":75,"type":"Eau de Parfum","found":true,"prices":[{"site":"Notino","country":"FR","currency":"EUR","price":69.90,"isOfficial":false,"url":"https://notino.fr/...","in_stock":true}],"notes":""}
 
-Etape 2 : Recherche ce parfum sur TOUS les sites e-commerce qui le vendent dans le monde entier. Cherche avec des requêtes comme :
-- "[nom du parfum] prix"
-- "[nom du parfum] buy online"  
-- "[nom du parfum] EAN ${ean}"
-- "[nom du parfum] site:notino.fr OR site:sephora.fr OR site:douglas.de"
-- "[nom du parfum] perfume price"
-
-Collecte le maximum de prix sur le maximum de sites différents (objectif : 10+ sites).
-
-Retourne UNIQUEMENT ce JSON sans markdown ni backticks :
-{
-  "product_name": "nom complet du parfum",
-  "brand": "marque",
-  "volume_ml": 75,
-  "type": "Eau de Parfum",
-  "found": true,
-  "prices": [
-    {
-      "site": "Nom du site",
-      "country": "FR",
-      "currency": "EUR",
-      "price": 69.90,
-      "isOfficial": false,
-      "url": "https://...",
-      "in_stock": true
-    }
-  ],
-  "notes": "remarques utiles"
-}
-
-Si le produit est introuvable : found:false, prices:[].`;
+Règles strictes :
+- JSON sur une seule ligne
+- Maximum 15 sites
+- URLs courtes (domaine + chemin court seulement)
+- Pas de caractères spéciaux dans les valeurs
+- Si introuvable : {"found":false,"prices":[]}`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -59,7 +35,7 @@ Si le produit est introuvable : found:false, prices:[].`;
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 1500,
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 10 }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 8 }],
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -71,16 +47,54 @@ Si le produit est introuvable : found:false, prices:[].`;
 
     const data = await response.json();
     const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return res.status(502).json({ error: 'Réponse inattendue' });
 
-    const result = JSON.parse(match[0]);
+    // Nettoyage robuste du JSON
+    let jsonStr = text.replace(/```json|```/g, '').trim();
+    
+    // Cherche le JSON même s'il y a du texte autour
+    const match = jsonStr.match(/\{.*\}/s);
+    if (!match) return res.status(502).json({ error: 'Réponse inattendue du modèle' });
+
+    jsonStr = match[0];
+
+    // Nettoyage des problèmes courants
+    jsonStr = jsonStr
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ') // caractères de contrôle
+      .replace(/,\s*}/g, '}')   // virgule avant }
+      .replace(/,\s*]/g, ']');  // virgule avant ]
+
+    let result;
+    try {
+      result = JSON.parse(jsonStr);
+    } catch(parseErr) {
+      // Tentative de récupération : extrait juste les données clés
+      const productName = text.match(/"product_name"\s*:\s*"([^"]+)"/)?.[1] || 'Inconnu';
+      const brand = text.match(/"brand"\s*:\s*"([^"]+)"/)?.[1] || '';
+      const found = text.includes('"found":true');
+      
+      // Extrait les prix individuellement
+      const prices = [];
+      const priceRegex = /"site"\s*:\s*"([^"]+)"[^}]*"country"\s*:\s*"([^"]+)"[^}]*"currency"\s*:\s*"([^"]+)"[^}]*"price"\s*:\s*([\d.]+)/g;
+      let m;
+      while((m = priceRegex.exec(text)) !== null) {
+        prices.push({
+          site: m[1], country: m[2], currency: m[3], price: parseFloat(m[4]),
+          isOfficial: false, url: '', in_stock: true
+        });
+      }
+      result = { product_name: productName, brand, found, prices };
+    }
+
     if (result.prices) {
       result.prices = result.prices.map(p => ({
         ...p,
-        priceEur: p.currency === 'GBP' ? p.price * 1.18 : p.currency === 'USD' ? p.price * 0.92 : p.price
+        price: parseFloat(p.price) || 0,
+        priceEur: p.currency === 'GBP' ? (parseFloat(p.price)||0) * 1.18 
+                : p.currency === 'USD' ? (parseFloat(p.price)||0) * 0.92 
+                : parseFloat(p.price) || 0
       }));
     }
+
     return res.status(200).json(result);
 
   } catch (err) {
